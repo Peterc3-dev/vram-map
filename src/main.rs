@@ -15,8 +15,8 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Cell, Gauge, Paragraph, Row, Table};
 use ratatui::Terminal;
 
-const GREEN: Color = Color::Rgb(0, 255, 0);
-const DIM_GREEN: Color = Color::Rgb(0, 100, 0);
+const GREEN: Color = Color::Rgb(0, 255, 200);
+const DIM_GREEN: Color = Color::Rgb(0, 128, 100);
 const YELLOW: Color = Color::Rgb(255, 255, 0);
 const RED: Color = Color::Rgb(255, 60, 60);
 
