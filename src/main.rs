@@ -101,9 +101,12 @@ fn draw_header(f: &mut ratatui::Frame, area: Rect, info: &gpu::GpuInfo, stats: &
     let block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(GREEN))
-        .title(Span::styled("vram-map", Style::default().fg(GREEN).add_modifier(Modifier::BOLD)));
-    let para = Paragraph::new(Line::from(Span::styled(title, Style::default().fg(GREEN))))
-        .block(block);
+        .title(Span::styled(
+            "vram-map",
+            Style::default().fg(GREEN).add_modifier(Modifier::BOLD),
+        ));
+    let para =
+        Paragraph::new(Line::from(Span::styled(title, Style::default().fg(GREEN)))).block(block);
     f.render_widget(para, area);
 }
 
@@ -128,18 +131,26 @@ fn draw_gauges(f: &mut ratatui::Frame, area: Rect, info: &gpu::GpuInfo, stats: &
 
     let vram_pct = if info.vram_total > 0 {
         (stats.vram_used as f64 / info.vram_total as f64 * 100.0) as u16
-    } else { 0 };
+    } else {
+        0
+    };
     let gtt_pct = if info.gtt_total > 0 {
         (stats.gtt_used as f64 / info.gtt_total as f64 * 100.0) as u16
-    } else { 0 };
+    } else {
+        0
+    };
 
     let vram_label = format!(
         "VRAM: {} / {} ({:.0}%)",
-        fmt_bytes(stats.vram_used), fmt_bytes(info.vram_total), vram_pct
+        fmt_bytes(stats.vram_used),
+        fmt_bytes(info.vram_total),
+        vram_pct
     );
     let gtt_label = format!(
         "GTT:  {} / {} ({:.0}%)",
-        fmt_bytes(stats.gtt_used), fmt_bytes(info.gtt_total), gtt_pct
+        fmt_bytes(stats.gtt_used),
+        fmt_bytes(info.gtt_total),
+        gtt_pct
     );
 
     let vram_gauge = Gauge::default()
@@ -156,7 +167,11 @@ fn draw_gauges(f: &mut ratatui::Frame, area: Rect, info: &gpu::GpuInfo, stats: &
 
     let gpu_label = format!("GPU:  {}%", stats.gpu_busy_pct);
     let gpu_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(bar_color(stats.gpu_busy_pct as u16)).bg(Color::Black))
+        .gauge_style(
+            Style::default()
+                .fg(bar_color(stats.gpu_busy_pct as u16))
+                .bg(Color::Black),
+        )
         .ratio(stats.gpu_busy_pct.min(100) as f64 / 100.0)
         .label(Span::styled(gpu_label, Style::default().fg(GREEN)));
     f.render_widget(gpu_gauge, rows[2]);
@@ -165,13 +180,21 @@ fn draw_gauges(f: &mut ratatui::Frame, area: Rect, info: &gpu::GpuInfo, stats: &
     let combined_total = info.vram_total + info.gtt_total;
     let combined_pct = if combined_total > 0 {
         (combined_used as f64 / combined_total as f64 * 100.0) as u16
-    } else { 0 };
+    } else {
+        0
+    };
     let combined_label = format!(
         "UMA:  {} / {} ({:.0}%)",
-        fmt_bytes(combined_used), fmt_bytes(combined_total), combined_pct
+        fmt_bytes(combined_used),
+        fmt_bytes(combined_total),
+        combined_pct
     );
     let combined_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(bar_color(combined_pct)).bg(Color::Black))
+        .gauge_style(
+            Style::default()
+                .fg(bar_color(combined_pct))
+                .bg(Color::Black),
+        )
         .ratio(combined_pct.min(100) as f64 / 100.0)
         .label(Span::styled(combined_label, Style::default().fg(GREEN)));
     f.render_widget(combined_gauge, rows[3]);
@@ -186,15 +209,21 @@ fn draw_processes(f: &mut ratatui::Frame, area: Rect, procs: &[gpu::ProcessGpuMe
         Cell::from("Total").style(Style::default().fg(GREEN).add_modifier(Modifier::BOLD)),
     ]);
 
-    let rows: Vec<Row> = procs.iter().map(|p| {
-        Row::new(vec![
-            Cell::from(p.pid.to_string()).style(Style::default().fg(DIM_GREEN)),
-            Cell::from(p.name.clone()).style(Style::default().fg(GREEN)),
-            Cell::from(fmt_kib(p.vram_kib)).style(Style::default().fg(Color::Rgb(100, 200, 255))),
-            Cell::from(fmt_kib(p.gtt_kib)).style(Style::default().fg(Color::Rgb(200, 200, 100))),
-            Cell::from(fmt_kib(p.total_kib())).style(Style::default().fg(GREEN).add_modifier(Modifier::BOLD)),
-        ])
-    }).collect();
+    let rows: Vec<Row> = procs
+        .iter()
+        .map(|p| {
+            Row::new(vec![
+                Cell::from(p.pid.to_string()).style(Style::default().fg(DIM_GREEN)),
+                Cell::from(p.name.clone()).style(Style::default().fg(GREEN)),
+                Cell::from(fmt_kib(p.vram_kib))
+                    .style(Style::default().fg(Color::Rgb(100, 200, 255))),
+                Cell::from(fmt_kib(p.gtt_kib))
+                    .style(Style::default().fg(Color::Rgb(200, 200, 100))),
+                Cell::from(fmt_kib(p.total_kib()))
+                    .style(Style::default().fg(GREEN).add_modifier(Modifier::BOLD)),
+            ])
+        })
+        .collect();
 
     let table = Table::new(
         rows,
@@ -221,7 +250,10 @@ fn draw_processes(f: &mut ratatui::Frame, area: Rect, procs: &[gpu::ProcessGpuMe
 
 fn draw_footer(f: &mut ratatui::Frame, area: Rect) {
     let footer = Paragraph::new(Line::from(vec![
-        Span::styled(" q", Style::default().fg(GREEN).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            " q",
+            Style::default().fg(GREEN).add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" quit  ", Style::default().fg(DIM_GREEN)),
         Span::styled("refresh: 500ms", Style::default().fg(DIM_GREEN)),
     ]));
@@ -229,7 +261,13 @@ fn draw_footer(f: &mut ratatui::Frame, area: Rect) {
 }
 
 fn bar_color(pct: u16) -> Color {
-    if pct > 90 { RED } else if pct > 70 { YELLOW } else { GREEN }
+    if pct > 90 {
+        RED
+    } else if pct > 70 {
+        YELLOW
+    } else {
+        GREEN
+    }
 }
 
 fn fmt_bytes(bytes: u64) -> String {
@@ -251,5 +289,36 @@ fn fmt_kib(kib: u64) -> String {
         format!("{:.1} MiB", kib as f64 / 1024.0)
     } else {
         format!("{:.2} GiB", kib as f64 / (1024.0 * 1024.0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bar_color_thresholds() {
+        // green below/at 70, yellow in (70, 90], red above 90
+        assert_eq!(bar_color(0), GREEN);
+        assert_eq!(bar_color(70), GREEN);
+        assert_eq!(bar_color(71), YELLOW);
+        assert_eq!(bar_color(90), YELLOW);
+        assert_eq!(bar_color(91), RED);
+        assert_eq!(bar_color(100), RED);
+    }
+
+    #[test]
+    fn fmt_bytes_scales_units() {
+        assert_eq!(fmt_bytes(512), "512 B");
+        assert_eq!(fmt_bytes(1536), "1.5 KiB");
+        assert_eq!(fmt_bytes(1024 * 1024), "1.0 MiB");
+        assert_eq!(fmt_bytes(1024 * 1024 * 1024), "1.00 GiB");
+    }
+
+    #[test]
+    fn fmt_kib_scales_units() {
+        assert_eq!(fmt_kib(512), "512 KiB");
+        assert_eq!(fmt_kib(1536), "1.5 MiB");
+        assert_eq!(fmt_kib(1024 * 1024), "1.00 GiB");
     }
 }
