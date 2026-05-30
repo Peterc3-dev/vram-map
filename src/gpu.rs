@@ -217,7 +217,7 @@ pub fn read_process_gpu_mem() -> Vec<ProcessGpuMem> {
     }
 
     let mut procs: Vec<ProcessGpuMem> = map.into_values().collect();
-    procs.sort_by(|a, b| b.total_kib().cmp(&a.total_kib()));
+    procs.sort_by_key(|p| std::cmp::Reverse(p.total_kib()));
     procs
 }
 
@@ -229,8 +229,8 @@ fn parse_kib_value(s: &str) -> Option<u64> {
 }
 
 fn read_sysfs_u64(path: &Path) -> Result<u64> {
-    let content = fs::read_to_string(path)
-        .with_context(|| format!("reading {}", path.display()))?;
+    let content =
+        fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
     content
         .trim()
         .parse()
@@ -242,4 +242,58 @@ fn read_sysfs_str(path: &Path) -> Result<String> {
         .with_context(|| format!("reading {}", path.display()))?
         .trim()
         .to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pci_id_known_and_unknown() {
+        assert_eq!(pci_id_to_name("0x150e"), "AMD Radeon 890M (gfx1150)");
+        // leading 0x is optional / case-insensitive on the prefix only
+        assert_eq!(pci_id_to_name("164e"), "AMD Radeon 780M");
+        // whitespace is trimmed before lookup
+        assert_eq!(pci_id_to_name("  0x73bf  "), "AMD Radeon RX 6900 XT");
+        // unknown id falls back to a generic label carrying the raw id
+        assert_eq!(pci_id_to_name("0xabcd"), "AMD GPU [abcd]");
+    }
+
+    #[test]
+    fn parse_kib_value_handles_tabs_and_spaces() {
+        assert_eq!(parse_kib_value("\t12345 KiB"), Some(12345));
+        assert_eq!(parse_kib_value(" 6789 KiB"), Some(6789));
+        assert_eq!(parse_kib_value("0 KiB"), Some(0));
+        assert_eq!(parse_kib_value("   "), None);
+        assert_eq!(parse_kib_value("notanumber KiB"), None);
+    }
+
+    #[test]
+    fn parse_active_dpm_picks_starred_line() {
+        // Only the line marked with '*' is the active clock.
+        let content = "0: 200Mhz\n1: 742Mhz *\n2: 1100Mhz\n";
+        let path = std::env::temp_dir().join("vram_map_dpm_test.tmp");
+        fs::write(&path, content).unwrap();
+        assert_eq!(parse_active_dpm(&path), Some(742));
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn parse_active_dpm_none_when_no_active() {
+        let path = std::env::temp_dir().join("vram_map_dpm_test_none.tmp");
+        fs::write(&path, "0: 200Mhz\n1: 742Mhz\n").unwrap();
+        assert_eq!(parse_active_dpm(&path), None);
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn total_kib_sums_vram_and_gtt() {
+        let p = ProcessGpuMem {
+            pid: 1,
+            name: "x".into(),
+            vram_kib: 100,
+            gtt_kib: 25,
+        };
+        assert_eq!(p.total_kib(), 125);
+    }
 }
